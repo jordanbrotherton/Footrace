@@ -30,10 +30,9 @@ import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.lifecycleScope
-import com.example.footrace.ui.theme.FootraceTheme
+import com.example.footrace.ui.theme.AppTheme
 import kotlinx.coroutines.launch
 
-// Jouvens Added these for FAB
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -64,9 +63,9 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            FootraceTheme {
+            AppTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Header()
+                    Header(modifier = Modifier.padding(innerPadding))
                 }
             }
         }
@@ -83,7 +82,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Header() {
+fun Header(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val health = remember { HealthData(context.applicationContext) }
     var stepCount by remember { mutableStateOf(StepData()) }
@@ -102,8 +101,7 @@ fun Header() {
             }
         }
     }
-    /*-------------------------------------Jouvens Added----------------------------------------------*/
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.fillMaxSize().padding(24.dp),
             verticalArrangement = Arrangement.Center,
@@ -172,13 +170,10 @@ fun Header() {
     }
 }
 
-
-/*------------------------------------------------------------------------------------------------*/
-
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    FootraceTheme {
+    AppTheme {
         Greeting("Android")
     }
 }
