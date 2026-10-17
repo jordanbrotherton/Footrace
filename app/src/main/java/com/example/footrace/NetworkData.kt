@@ -34,14 +34,12 @@ object NetworkData {
      *
      *
      * @param steps The [StepData] to save online.
-     * @param name The user's name to save online.
      * @return A [Boolean] indicating whether the save was successful.
      */
-    suspend fun sendSteps(steps: StepData, name: String = ""): Boolean {
+    suspend fun sendSteps(steps: StepData): Boolean {
         val uid = auth.currentUser?.uid ?: return false
         val userUpdate = hashMapOf(
             "uid" to uid,
-            "name" to name,
             "daySteps" to steps.daySteps,
             "yesterdaySteps" to steps.yesterdaySteps,
             "monthSteps" to steps.monthSteps,
@@ -53,6 +51,41 @@ object NetworkData {
             true
         }catch (e: Exception){
             false
+        }
+    }
+
+    /**
+     * Saves the name for the client's user.
+     *
+     *
+     * @param name The user's name to save online.
+     * @return A [Boolean] indicating whether the save was successful.
+     */
+    suspend fun sendName(name: String): Boolean {
+        val uid = auth.currentUser?.uid ?: return false
+
+        return try {
+            db.collection("users").document(uid).set(mapOf("name" to name), SetOptions.merge()).await()
+            true
+        }catch (e: Exception){
+            false
+        }
+    }
+
+    /**
+     * Obtains the name for the client's user.
+     *
+     *
+     * @return A [String] with the user's name.
+     */
+    suspend fun getName(): String {
+        val uid = auth.currentUser?.uid ?: return ""
+
+        return try {
+            val snapshot = db.collection("users").document(uid).get().await()
+            snapshot.getString("name") ?: ""
+        }catch (e: Exception){
+            ""
         }
     }
 
@@ -198,5 +231,18 @@ object NetworkData {
         }catch (e: Exception){
             return emptyList()
         }
+    }
+
+    /**
+     * Sends a friend request with a name lookup.
+     *
+     *
+     * @param name The name of the user to send.
+     * @return A [Boolean] if the request is successful.
+     */
+    suspend fun sendFriendByName(name: String): Boolean {
+        val snap = db.collection("users").whereEqualTo("name", name.trim()).limit(1).get().await()
+        val targetUid = snap.documents.firstOrNull()?.id ?: return false
+        return sendFriend(targetUid)
     }
 }
