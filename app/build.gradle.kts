@@ -49,6 +49,7 @@ dependencies {
     implementation(libs.androidx.legacy.support.v4)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation("androidx.health.connect:connect-client:1.2.0-alpha06")
+    implementation(libs.androidx.material3)
     implementation(libs.androidx.recyclerview)
     implementation(libs.material)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")

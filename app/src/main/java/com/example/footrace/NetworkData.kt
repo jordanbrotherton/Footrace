@@ -29,6 +29,10 @@ object NetworkData {
         }
     }
 
+    fun getUid(): String {
+        return auth.currentUser?.uid ?: ""
+    }
+
     /**
      * Saves the step and user data for the client's user.
      *

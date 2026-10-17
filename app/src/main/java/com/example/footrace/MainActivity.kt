@@ -35,6 +35,7 @@ import com.example.footrace.ui.theme.AppTheme
 import kotlinx.coroutines.launch
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -57,8 +58,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.text.font.FontWeight
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -172,6 +181,18 @@ fun Header(modifier: Modifier = Modifier) {
 
 /*-------------------------------------Jouvens =Added----------------------------------------------*/
     if(isOnboarded) {
+        var selectedElement by remember { mutableStateOf(TimeElement.TODAY) }
+        var friends by remember { mutableStateOf<List<User>>(emptyList()) }
+        val currentUid = remember { NetworkData.getUid() }
+
+        fun refreshLeaderboard() {
+            scope.launch {
+                val container = NetworkData.getFriends() ?: NetworkData.FriendContainer()
+                val allUids = (container.friends + currentUid).filter { it.isNotBlank() }.distinct()
+                friends = NetworkData.friendToUData(allUids)
+            }
+        }
+
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -191,6 +212,7 @@ fun Header(modifier: Modifier = Modifier) {
                         if (health.isPermitted()) {
                             stepCount = health.getSteps()
                             NetworkData.sendSteps(stepCount)
+                            refreshLeaderboard()
                         } else {
                             launcher.launch(health.permissions)
                         }
@@ -198,6 +220,18 @@ fun Header(modifier: Modifier = Modifier) {
                 }) {
                     Text("Update Steps")
                 }
+
+                LeaderboardTimeFilter(
+                    selectedElement = selectedElement,
+                    onWindowSelected = { selectedElement = it },
+                    modifier = Modifier.padding(vertical = 12.dp)
+                )
+
+                LeaderboardSection(
+                    users = friends,
+                    selectedElement = selectedElement,
+                    currentUid = currentUid
+                )
             }
 
             // Add a view Fragment
@@ -209,7 +243,6 @@ fun Header(modifier: Modifier = Modifier) {
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Open sheet")
             }
-
 
             if (showSheet) {
                 ModalBottomSheet(
@@ -257,6 +290,104 @@ fun Header(modifier: Modifier = Modifier) {
 
                         Spacer(modifier = Modifier.height(32.dp))
                     }
+                }
+            }
+        }
+    }
+}
+
+
+enum class TimeElement(val label: String){
+    TODAY("Today"),
+    YESTERDAY("Yesterday"),
+    MONTH("Month")
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LeaderboardTimeFilter(
+    selectedElement: TimeElement,
+    onWindowSelected: (TimeElement) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    SingleChoiceSegmentedButtonRow(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        TimeElement.entries.forEachIndexed { index, element -> SegmentedButton(
+            selected = selectedElement ==  element,
+            onClick = { onWindowSelected(element) },
+            shape = SegmentedButtonDefaults.itemShape(index = index, count = TimeElement.entries.size)
+        ) { Text(element.label) } }
+    }
+}
+
+@Composable
+fun LeaderboardSection(
+    users: List<User>,
+    selectedElement: TimeElement,
+    currentUid: String,
+    modifier: Modifier = Modifier
+) {
+    val sortedUsers = remember(users, selectedElement) {
+        users.sortedByDescending { user ->
+            when(selectedElement) {
+                TimeElement.TODAY -> user.daySteps
+                TimeElement.YESTERDAY -> user.yesterdaySteps
+                TimeElement.MONTH -> user.monthSteps
+            }
+        }
+    }
+
+    LazyColumn(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(bottom = 16.dp)
+    ) {
+        itemsIndexed(sortedUsers, key = { _, user -> user.uid }) { index, user ->
+            val isCurrentUser = user.uid == currentUid
+
+            val stepCount = when (selectedElement) {
+                TimeElement.TODAY -> user.daySteps
+                TimeElement.YESTERDAY -> user.yesterdaySteps
+                TimeElement.MONTH -> user.monthSteps
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = if(isCurrentUser){
+                        MaterialTheme.colorScheme.primaryContainer
+                    }else{
+                        MaterialTheme.colorScheme.surfaceVariant
+                    }
+                )
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "#${index + 1}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (index == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = if (isCurrentUser) "${user.name} (You)" else user.name,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = if (isCurrentUser) FontWeight.Bold else FontWeight.Medium
+                        )
+                    }
+
+                    Text(
+                        text = "$stepCount steps",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         }
