@@ -5,6 +5,9 @@ import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.ServerTimestamp
 import java.time.Instant
 
+/**
+ * Contains all the information of the user, fetched/saved to Firestore.
+ */
 data class User(
     @DocumentId
     val uid: String = "",
