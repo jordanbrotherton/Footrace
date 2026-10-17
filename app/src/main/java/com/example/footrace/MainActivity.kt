@@ -102,7 +102,7 @@ fun Header() {
             }
         }
     }
-/*-------------------------------------Jouvens Added----------------------------------------------*/
+    /*-------------------------------------Jouvens Added----------------------------------------------*/
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -141,6 +141,7 @@ fun Header() {
             Icon(Icons.Default.Add, contentDescription = "Open sheet")
         }
 
+
         if (showSheet) {
             ModalBottomSheet(
                 onDismissRequest = { showSheet = false },
@@ -151,7 +152,16 @@ fun Header() {
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp, vertical = 16.dp)
                 ) {
-                    Text("Friends", style = MaterialTheme.typography.titleLarge)
+
+
+                    // Add Friend Button Future Implementation
+                    Button(
+                        onClick = { /* ... */ },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Add Friends")
+                    }
+
                     Spacer(modifier = Modifier.height(16.dp))
                     // Put your sheet content here
 
@@ -161,6 +171,7 @@ fun Header() {
         }
     }
 }
+
 
 /*------------------------------------------------------------------------------------------------*/
 
