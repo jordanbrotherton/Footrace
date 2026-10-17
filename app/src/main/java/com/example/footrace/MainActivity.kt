@@ -33,6 +33,17 @@ import androidx.lifecycle.lifecycleScope
 import com.example.footrace.ui.theme.FootraceTheme
 import kotlinx.coroutines.launch
 
+// Jouvens Added these for FAB
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,12 +81,16 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Header() {
     val context = LocalContext.current
     val health = remember { HealthData(context.applicationContext) }
     var stepCount by remember { mutableStateOf(StepData()) }
     val scope = rememberCoroutineScope()
+
+    var showSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
 
     val launcher = rememberLauncherForActivityResult(
         contract = PermissionController.createRequestPermissionResultContract()
@@ -87,34 +102,67 @@ fun Header() {
             }
         }
     }
+/*-------------------------------------Jouvens Added----------------------------------------------*/
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "${stepCount.daySteps}",
+                style = MaterialTheme.typography.displayLarge
+            )
+            Text(text = "Steps Today", style = MaterialTheme.typography.bodyMedium)
 
-    Column(
-        modifier =  Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "${stepCount.daySteps}",
-            style = MaterialTheme.typography.displayLarge
-        )
-        Text(text = "Steps Today", style = MaterialTheme.typography.bodyMedium)
+            Spacer(modifier = Modifier.height(24.dp))
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Button(onClick = {
+                scope.launch {
+                    if (health.isPermitted()) {
+                        stepCount = health.getSteps()
+                        NetworkData.sendSteps(stepCount)
+                    } else {
+                        launcher.launch(health.permissions)
+                    }
+                }
+            }) {
+                Text("Update Steps")
+            }
+        }
 
-        Button(onClick = {
-            scope.launch {
-                if(health.isPermitted()) {
-                    stepCount = health.getSteps()
-                    NetworkData.sendSteps(stepCount)
-                } else {
-                    launcher.launch(health.permissions)
+        // Add a view Fragment
+        FloatingActionButton(
+            onClick = { showSheet = true },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(start = 24.dp, top = 24.dp, end = 24.dp, bottom = 75.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Open sheet")
+        }
+
+        if (showSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showSheet = false },
+                sheetState = sheetState
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 16.dp)
+                ) {
+                    Text("Friends", style = MaterialTheme.typography.titleLarge)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    // Put your sheet content here
+
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
             }
-        }) {
-            Text("Update Steps")
         }
     }
 }
+
+/*------------------------------------------------------------------------------------------------*/
 
 @Preview(showBackground = true)
 @Composable
