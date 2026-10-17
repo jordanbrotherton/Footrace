@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
@@ -43,6 +44,20 @@ import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
+
+// Jouvens Added these for textfield
+import androidx.compose.material3.OutlinedTextField
+
+// Adding Rows
+import androidx.compose.foundation.layout.Row
+
+// Adding width
+import androidx.compose.foundation.layout.width
+
+// Importing Circle Shape
+import androidx.compose.foundation.shape.CircleShape
+
+import androidx.compose.foundation.layout.fillMaxSize
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -89,6 +104,9 @@ fun Header() {
     var stepCount by remember { mutableStateOf(StepData()) }
     val scope = rememberCoroutineScope()
 
+    // Variable to take friend Username
+    var Username by remember { mutableStateOf("") }
+
     var showSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
 
@@ -102,7 +120,8 @@ fun Header() {
             }
         }
     }
-    /*-------------------------------------Jouvens Added----------------------------------------------*/
+
+/*-------------------------------------Jouvens Added----------------------------------------------*/
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -153,13 +172,31 @@ fun Header() {
                         .padding(horizontal = 24.dp, vertical = 16.dp)
                 ) {
 
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    ){
 
-                    // Add Friend Button Future Implementation
-                    Button(
-                        onClick = { /* ... */ },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Add Friends")
+                        OutlinedTextField(
+                            value = Username,
+                            onValueChange = { Username = it },
+                            label = { Text("Enter your name") },
+                            placeholder = { Text("e.g. John Doe") },
+                            modifier = Modifier
+                                .height(65.dp)
+                                .width(300.dp),
+                            maxLines = 1
+                        )
+
+                        // Add Friend Button Future Implementation
+                        Button(
+                            onClick = { },
+                            modifier = Modifier
+                                .wrapContentSize()
+                                .padding(top = 13.dp, start = 16.dp)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Open sheet")
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
