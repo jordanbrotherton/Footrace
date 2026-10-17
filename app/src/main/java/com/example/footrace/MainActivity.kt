@@ -255,35 +255,30 @@ fun Header(modifier: Modifier = Modifier) {
                             .padding(horizontal = 24.dp, vertical = 16.dp)
                     ) {
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                        ) {
 
-                            OutlinedTextField(
-                                value = friendSearchName,
-                                onValueChange = { friendSearchName = it },
-                                label = { Text("Friend Name") },
-                                placeholder = { Text("Big Stepper") },
-                                modifier = Modifier
-                                    .height(65.dp)
-                                    .width(300.dp),
-                                maxLines = 1
-                            )
+                    OutlinedTextField(
+                        value = friendSearchName,
+                        onValueChange = { friendSearchName = it },
+                        label = { Text("Friend Name") },
+                        placeholder = { Text("Big Stepper") },
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        maxLines = 1
+                    )
 
-                            Button(
-                                onClick = {
-                                    scope.launch {
-                                        NetworkData.sendFriendByName(friendSearchName)
-                                    }
-                                },
-                                modifier = Modifier
-                                    .wrapContentSize()
-                                    .padding(top = 13.dp, start = 16.dp)
-                            ) {
-                                Icon(Icons.Default.Add, contentDescription = "Open sheet")
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                NetworkData.sendFriendByName(friendSearchName)
                             }
-                        }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Open sheet")
+                    }
+
 
                         Spacer(modifier = Modifier.height(16.dp))
                         // Put your sheet content here
@@ -298,8 +293,8 @@ fun Header(modifier: Modifier = Modifier) {
 
 
 enum class TimeElement(val label: String){
-    TODAY("Today"),
     YESTERDAY("Yesterday"),
+    TODAY("Today"),
     MONTH("Month")
 }
 
