@@ -26,11 +26,23 @@ class HealthData(context: Context) {
         HealthPermission.getReadPermission(StepsRecord::class)
     )
 
+    /**
+     * Checks if Health Connect has permissions to access step information.
+     *
+     *
+     * @return A [Boolean] indicating whether Health Connect has permissions.
+     */
     suspend fun isPermitted(): Boolean {
         val granted = health.permissionController.getGrantedPermissions()
         return granted.containsAll(permissions)
     }
 
+    /**
+     * Obtains the step data of the client through Health Connect.
+     *
+     *
+     * @return The user's step data as a [StepData].
+     */
     suspend fun getSteps(): StepData {
         val zoneID = ZoneId.systemDefault()
         val now = LocalDate.now(zoneID)
