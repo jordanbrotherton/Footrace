@@ -18,7 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -29,20 +28,23 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
-import androidx.health.connect.client.permission.HealthPermission
-import androidx.health.connect.client.records.StepsRecord
-import androidx.health.connect.client.request.AggregateRequest
-import androidx.health.connect.client.time.TimeRangeFilter
+import androidx.lifecycle.lifecycleScope
 import com.example.footrace.ui.theme.FootraceTheme
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        lifecycleScope.launch {
+            try {
+                val uid = NetworkData.getAuth()
+                android.util.Log.d("FootraceAuth", "Authenticated runner UID: $uid")
+            } catch (e: Exception) {
+                android.util.Log.e("FootraceAuth", "Auth failed", e)
+            }
+        }
 
         val availabilityStatus = HealthConnectClient.getSdkStatus(this)
         if (availabilityStatus == HealthConnectClient.SDK_UNAVAILABLE) {
@@ -59,14 +61,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-suspend fun getSteps(health: HealthConnectClient): Long {
-    val dayStart = LocalDate.now(ZoneId.systemDefault()).atStartOfDay(ZoneId.systemDefault()).toInstant()
-
-    val response = health.aggregate(AggregateRequest(metrics = setOf(StepsRecord.COUNT_TOTAL),
-        timeRangeFilter = TimeRangeFilter.between(dayStart, Instant.now())))
-    return response[StepsRecord.COUNT_TOTAL] ?: 0L
-}
-
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(
@@ -78,23 +72,19 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 @Composable
 fun Header() {
     val context = LocalContext.current
-
-    val healthConnectClient = remember {
-        HealthConnectClient.getOrCreate(context)
-    }
-
+    val health = remember { HealthData(context.applicationContext) }
     var stepCount by remember { mutableLongStateOf(0L) }
     val scope = rememberCoroutineScope()
 
-    val permissions = setOf(HealthPermission.getReadPermission(StepsRecord::class))
-
     val launcher = rememberLauncherForActivityResult(
         contract = PermissionController.createRequestPermissionResultContract()
-    ) { granted -> if (granted.containsAll(permissions)) {
-        scope.launch {
-            stepCount = getSteps(healthConnectClient)
+    ) { granted ->
+        if (granted.containsAll(health.permissions)) {
+            scope.launch {
+                stepCount = health.getSteps()
+                NetworkData.sendSteps(stepCount)
+            }
         }
-    }
     }
 
     Column(
@@ -112,11 +102,11 @@ fun Header() {
 
         Button(onClick = {
             scope.launch {
-                val granted = healthConnectClient.permissionController.getGrantedPermissions()
-                if(granted.containsAll(permissions)) {
-                    stepCount = getSteps(healthConnectClient)
+                if(health.isPermitted()) {
+                    stepCount = health.getSteps()
+                    NetworkData.sendSteps(stepCount)
                 } else {
-                    launcher.launch(permissions)
+                    launcher.launch(health.permissions)
                 }
             }
         }) {
