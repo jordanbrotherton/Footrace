@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Footrace</string>
+    <string name="add_friend">Add Friend</string>
+    <string name="friend_list">Friend List</string>
+    <string name="settings">Settings</string>
+    <string name="leaderboard">Leaderboard</string>
+
 </resources>
