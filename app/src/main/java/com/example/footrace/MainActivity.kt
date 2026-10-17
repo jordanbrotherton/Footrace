@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -73,7 +74,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 fun Header() {
     val context = LocalContext.current
     val health = remember { HealthData(context.applicationContext) }
-    var stepCount by remember { mutableLongStateOf(0L) }
+    var stepCount by remember { mutableStateOf(StepData()) }
     val scope = rememberCoroutineScope()
 
     val launcher = rememberLauncherForActivityResult(
@@ -93,7 +94,7 @@ fun Header() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "$stepCount",
+            text = "${stepCount.daySteps}",
             style = MaterialTheme.typography.displayLarge
         )
         Text(text = "Steps Today", style = MaterialTheme.typography.bodyMedium)

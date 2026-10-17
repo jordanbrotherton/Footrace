@@ -21,12 +21,14 @@ object NetworkData {
         }
     }
 
-    suspend fun sendSteps(steps: Long, name: String = ""): Boolean {
+    suspend fun sendSteps(steps: StepData, name: String = ""): Boolean {
         val uid = auth.currentUser?.uid ?: return false
         val userUpdate = hashMapOf(
             "uid" to uid,
             "name" to name,
-            "daySteps" to steps,
+            "daySteps" to steps.daySteps,
+            "yesterdaySteps" to steps.yesterdaySteps,
+            "monthSteps" to steps.monthSteps,
             "lastActive" to Timestamp.now()
         )
 
