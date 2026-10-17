@@ -23,7 +23,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -58,15 +57,21 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 
 class MainActivity : ComponentActivity() {
@@ -183,13 +188,18 @@ fun Header(modifier: Modifier = Modifier) {
     if(isOnboarded) {
         var selectedElement by remember { mutableStateOf(TimeElement.TODAY) }
         var friends by remember { mutableStateOf<List<User>>(emptyList()) }
+        var pendingFriends by remember { mutableStateOf<List<User>>(emptyList()) }
+        var allUsers by remember { mutableStateOf<List<User>>(emptyList()) }
         val currentUid = remember { NetworkData.getUid() }
 
         fun refreshLeaderboard() {
             scope.launch {
                 val container = NetworkData.getFriends() ?: NetworkData.FriendContainer()
-                val allUids = (container.friends + currentUid).filter { it.isNotBlank() }.distinct()
+                val allUids = (container.friends).filter { it.isNotBlank() }.distinct()
+                val pendUids = (container.pendingFriends).filter { it.isNotBlank() }.distinct()
                 friends = NetworkData.friendToUData(allUids)
+                allUsers = NetworkData.friendToUData((allUids + currentUid))
+                pendingFriends = NetworkData.friendToUData(pendUids)
             }
         }
 
@@ -228,7 +238,7 @@ fun Header(modifier: Modifier = Modifier) {
                 )
 
                 LeaderboardSection(
-                    users = friends,
+                    users = allUsers,
                     selectedElement = selectedElement,
                     currentUid = currentUid
                 )
@@ -281,9 +291,72 @@ fun Header(modifier: Modifier = Modifier) {
 
 
                         Spacer(modifier = Modifier.height(16.dp))
-                        // Put your sheet content here
+
+                        // pending friends
+
+                        if(pendingFriends.isNotEmpty()) {
+                            Text(
+                                text = "Pending Friends (${pendingFriends.size})",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    items(pendingFriends, key = { it.uid }) { friend ->
+                                        PendingFriendItemRow(
+                                            friend = friend,
+                                            onAddClick = {
+                                                scope.launch {
+                                                    NetworkData.approveFriend(friend.uid)
+                                                }
+                                            }
+                                        )
+                                    }
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(32.dp))
+
+                        // current friends
+
+                        Text(
+                            text = "Friends (${friends.size})",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        if(friends.isEmpty()) {
+                            Text(
+                                text = "No friends. Add some!",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(friends, key = { it.uid }) { friend ->
+                                    FriendItemRow(
+                                        friend = friend,
+                                        onRemoveClick = {
+                                            scope.launch {
+                                                NetworkData.removeFriend(friend.uid)
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -384,6 +457,85 @@ fun LeaderboardSection(
                         fontWeight = FontWeight.SemiBold
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun FriendItemRow(
+    friend: User,
+    onRemoveClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = friend.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "${friend.daySteps} steps today",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            IconButton(onClick = onRemoveClick) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Remove friend",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun PendingFriendItemRow(
+    friend: User,
+    onAddClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = friend.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            IconButton(onClick = onAddClick) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add friend"                )
             }
         }
     }
