@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
@@ -42,6 +43,22 @@ import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
+
+// Jouvens Added these for textfield
+import androidx.compose.material3.OutlinedTextField
+
+// Adding Rows
+import androidx.compose.foundation.layout.Row
+
+// Adding width
+import androidx.compose.foundation.layout.width
+
+// Importing Circle Shape
+import androidx.compose.foundation.shape.CircleShape
+
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
+import androidx.compose.runtime.LaunchedEffect
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,6 +105,13 @@ fun Header(modifier: Modifier = Modifier) {
     var stepCount by remember { mutableStateOf(StepData()) }
     val scope = rememberCoroutineScope()
 
+    var showNameDialog by remember { mutableStateOf(false) }
+    var inputName by remember { mutableStateOf("") }
+    var isOnboarded by remember { mutableStateOf(false) }
+
+    // Variable to take friend Username
+    var friendSearchName by remember { mutableStateOf("") }
+
     var showSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
 
@@ -96,74 +120,143 @@ fun Header(modifier: Modifier = Modifier) {
     ) { granted ->
         if (granted.containsAll(health.permissions)) {
             scope.launch {
-                stepCount = health.getSteps()
-                NetworkData.sendSteps(stepCount)
+                val name = NetworkData.getName()
+                if(name.isBlank()) {
+                    showNameDialog = true
+                }else{
+                    isOnboarded = true
+                }
             }
         }
     }
-    Box(modifier = modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "${stepCount.daySteps}",
-                style = MaterialTheme.typography.displayLarge
-            )
-            Text(text = "Steps Today", style = MaterialTheme.typography.bodyMedium)
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(onClick = {
-                scope.launch {
-                    if (health.isPermitted()) {
-                        stepCount = health.getSteps()
-                        NetworkData.sendSteps(stepCount)
-                    } else {
-                        launcher.launch(health.permissions)
-                    }
-                }
-            }) {
-                Text("Update Steps")
+    LaunchedEffect(Unit) {
+        if(!health.isPermitted()){
+            launcher.launch(health.permissions)
+        }else{
+            val name = NetworkData.getName()
+            if(name.isBlank()) {
+                showNameDialog = true
+            }else{
+                isOnboarded = true
             }
         }
+    }
 
-        // Add a view Fragment
-        FloatingActionButton(
-            onClick = { showSheet = true },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(start = 24.dp, top = 24.dp, end = 24.dp, bottom = 75.dp)
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "Open sheet")
-        }
-
-
-        if (showSheet) {
-            ModalBottomSheet(
-                onDismissRequest = { showSheet = false },
-                sheetState = sheetState
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 16.dp)
-                ) {
-
-
-                    // Add Friend Button Future Implementation
-                    Button(
-                        onClick = { /* ... */ },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Add Friends")
+    if (showNameDialog) {
+        AlertDialog(
+            onDismissRequest = {},
+            text = {
+                OutlinedTextField(
+                    value = inputName,
+                    onValueChange = { inputName = it },
+                    label = { Text("Your Name") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (inputName.isNotBlank()){
+                            scope.launch {
+                                NetworkData.sendName(inputName.trim())
+                                showNameDialog = false
+                                isOnboarded = true
+                            }
+                        }
                     }
+                ) { Text("Join") }
+            }
+        )
+    }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-                    // Put your sheet content here
+/*-------------------------------------Jouvens =Added----------------------------------------------*/
+    if(isOnboarded) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(24.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "${stepCount.daySteps}",
+                    style = MaterialTheme.typography.displayLarge
+                )
+                Text(text = "Steps Today", style = MaterialTheme.typography.bodyMedium)
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(onClick = {
+                    scope.launch {
+                        if (health.isPermitted()) {
+                            stepCount = health.getSteps()
+                            NetworkData.sendSteps(stepCount)
+                        } else {
+                            launcher.launch(health.permissions)
+                        }
+                    }
+                }) {
+                    Text("Update Steps")
+                }
+            }
+
+            // Add a view Fragment
+            FloatingActionButton(
+                onClick = { showSheet = true },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(start = 24.dp, top = 24.dp, end = 24.dp, bottom = 75.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Open sheet")
+            }
+
+
+            if (showSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = { showSheet = false },
+                    sheetState = sheetState
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 16.dp)
+                    ) {
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        ) {
+
+                            OutlinedTextField(
+                                value = friendSearchName,
+                                onValueChange = { friendSearchName = it },
+                                label = { Text("Friend Name") },
+                                placeholder = { Text("Big Stepper") },
+                                modifier = Modifier
+                                    .height(65.dp)
+                                    .width(300.dp),
+                                maxLines = 1
+                            )
+
+                            Button(
+                                onClick = {
+                                    scope.launch {
+                                        NetworkData.sendFriendByName(friendSearchName)
+                                    }
+                                },
+                                modifier = Modifier
+                                    .wrapContentSize()
+                                    .padding(top = 13.dp, start = 16.dp)
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "Open sheet")
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        // Put your sheet content here
+
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
                 }
             }
         }
