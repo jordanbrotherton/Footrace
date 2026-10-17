@@ -16,6 +16,7 @@ data class User(
     val yesterdaySteps: Long = 0L,
     val monthSteps: Long = 0L,
     val friends: List<String> = emptyList(),
+    val pendingFriends: List<String> = emptyList(),
     val lastActive: Timestamp = Timestamp.now(),
     @ServerTimestamp
     val updated: Timestamp? = null
