@@ -69,10 +69,18 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.res.fontResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -248,24 +256,30 @@ fun Header(modifier: Modifier = Modifier, contentPadding: PaddingValues = Paddin
                                 .padding(bottom = 24.dp, start = 20.dp, end = 20.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(
-                                text = "Today's Sprint",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 2.sp
-                            )
-
                             Spacer(modifier = Modifier.height(4.dp))
+
+                            val ScoreboardFont = FontFamily(
+                                Font(resId = R.font.doto_bold)
+                            )
 
                             Text(
                                 text = "%,d".format(stepCount.daySteps),
                                 fontSize = 72.sp,
-                                fontWeight = FontWeight.Black
+                                fontFamily = ScoreboardFont,
+                                style = TextStyle(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    shadow = Shadow(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        offset = Offset(0f, 0f),
+                                        blurRadius = 40f
+                                    )
+                                )
                             )
 
                             Text(
                                 text = "steps",
-                                fontSize = 14.sp,
+                                fontSize = 24.sp,
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
