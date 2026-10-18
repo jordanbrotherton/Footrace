@@ -56,9 +56,11 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -310,13 +312,14 @@ fun Header(modifier: Modifier = Modifier, contentPadding: PaddingValues = Paddin
             }
 
             // Add a view Fragment
-            FloatingActionButton(
+            ExtendedFloatingActionButton(
                 onClick = { showSheet = true },
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
+                    .align(Alignment.BottomCenter)
                     .padding(start = 24.dp, top = 24.dp, end = 24.dp, bottom = 75.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Open sheet")
+                Icon(Icons.Outlined.Person, contentDescription = "Open sheet")
+                Text(text = "Friends")
             }
 
             if (showSheet) {
@@ -329,6 +332,19 @@ fun Header(modifier: Modifier = Modifier, contentPadding: PaddingValues = Paddin
                             .fillMaxWidth()
                             .padding(horizontal = 24.dp, vertical = 16.dp)
                     ) {
+
+                    Text(
+                        text = "Add Friend",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Text(
+                        text = "Invite more competitors to your race!",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
 
 
                     OutlinedTextField(
@@ -352,6 +368,7 @@ fun Header(modifier: Modifier = Modifier, contentPadding: PaddingValues = Paddin
                             .padding(16.dp)
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Open sheet")
+                        Text(text = "Send Friend Request")
                     }
 
 
@@ -362,7 +379,7 @@ fun Header(modifier: Modifier = Modifier, contentPadding: PaddingValues = Paddin
                         if(pendingFriends.isNotEmpty()) {
                             Text(
                                 text = "Pending Friends (${pendingFriends.size})",
-                                style = MaterialTheme.typography.titleSmall,
+                                style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -383,15 +400,15 @@ fun Header(modifier: Modifier = Modifier, contentPadding: PaddingValues = Paddin
                                         )
                                     }
                             }
-                        }
 
-                        Spacer(modifier = Modifier.height(32.dp))
+                            Spacer(modifier = Modifier.height(32.dp))
+                        }
 
                         // current friends
 
                         Text(
                             text = "Friends (${friends.size})",
-                            style = MaterialTheme.typography.titleSmall,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -488,7 +505,7 @@ fun LeaderboardSection(
             Card(
                 modifier = Modifier.fillMaxWidth().animateItem(fadeInSpec = null, fadeOutSpec = null, placementSpec = spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessLow)),
                 colors = CardDefaults.cardColors(
-                    containerColor = if(isCurrentUser){
+                    containerColor = if(index == 0){
                         MaterialTheme.colorScheme.primaryContainer
                     }else{
                         MaterialTheme.colorScheme.surfaceVariant
@@ -505,19 +522,28 @@ fun LeaderboardSection(
                         Text(
                             text = "#${index + 1}",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = if(index == 0) FontWeight.Bold else FontWeight.SemiBold,
                             color = if (index == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = if (isCurrentUser) "${user.name} (You)" else user.name,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = if (isCurrentUser) FontWeight.Bold else FontWeight.Medium
-                        )
+                        Column {
+                            if (index == 0) {
+                                Text(
+                                    text = "In the Lead",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            }
+                            Text(
+                                text = if (isCurrentUser) "${user.name} (You)" else user.name,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = if (isCurrentUser) FontWeight.Bold else FontWeight.Medium
+                            )
+                        }
                     }
 
                     Text(
-                        text = "$stepCount steps",
+                        text = "${"%,d".format(stepCount)} steps",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -553,7 +579,7 @@ fun FriendItemRow(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "${friend.daySteps} steps today",
+                    text = "${"%,d".format(friend.daySteps)} steps today",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -600,7 +626,7 @@ fun PendingFriendItemRow(
             IconButton(onClick = onAddClick) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Add friend"                )
+                    contentDescription = "Add friend")
             }
         }
     }
