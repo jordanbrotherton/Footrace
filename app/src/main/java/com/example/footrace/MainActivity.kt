@@ -1,10 +1,13 @@
 package com.example.footrace
 
 import android.os.Bundle
+import android.view.RoundedCorner
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -43,24 +46,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
-
-// Jouvens Added these for textfield
 import androidx.compose.material3.OutlinedTextField
-
-// Adding Rows
 import androidx.compose.foundation.layout.Row
-
-// Adding width
 import androidx.compose.foundation.layout.width
-
-// Importing Circle Shape
-import androidx.compose.foundation.shape.CircleShape
-
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
@@ -70,9 +63,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -96,7 +92,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             AppTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Header(modifier = Modifier.padding(innerPadding))
+                    Header(modifier = Modifier.fillMaxSize(), contentPadding = innerPadding)
                 }
             }
         }
@@ -113,7 +109,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Header(modifier: Modifier = Modifier) {
+fun Header(modifier: Modifier = Modifier, contentPadding: PaddingValues = PaddingValues()) {
     val context = LocalContext.current
     val health = remember { HealthData(context.applicationContext) }
     var stepCount by remember { mutableStateOf(StepData()) }
@@ -184,13 +180,13 @@ fun Header(modifier: Modifier = Modifier) {
         )
     }
 
-/*-------------------------------------Jouvens =Added----------------------------------------------*/
     if(isOnboarded) {
         var selectedElement by remember { mutableStateOf(TimeElement.TODAY) }
         var friends by remember { mutableStateOf<List<User>>(emptyList()) }
         var pendingFriends by remember { mutableStateOf<List<User>>(emptyList()) }
         var allUsers by remember { mutableStateOf<List<User>>(emptyList()) }
         val currentUid = remember { NetworkData.getUid() }
+        var isLoading by remember { mutableStateOf(true) }
 
         fun refreshLeaderboard() {
             scope.launch {
@@ -203,45 +199,112 @@ fun Header(modifier: Modifier = Modifier) {
             }
         }
 
+        suspend fun sync() {
+            isLoading = true
+            if (health.isPermitted()) {
+                stepCount = health.getSteps()
+                NetworkData.sendSteps(stepCount)
+                refreshLeaderboard()
+                isLoading = false
+            } else {
+                launcher.launch(health.permissions)
+            }
+        }
+
+        LaunchedEffect (isOnboarded) {
+            if(isOnboarded) { sync() }
+        }
+
+        var scrollState = rememberScrollState()
+
         Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(24.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+            PullToRefreshBox(
+                isRefreshing = isLoading,
+                onRefresh = {scope.launch{sync()}},
+                modifier = Modifier.fillMaxSize()
             ) {
-                Text(
-                    text = "${stepCount.daySteps}",
-                    style = MaterialTheme.typography.displayLarge
-                )
-                Text(text = "Steps Today", style = MaterialTheme.typography.bodyMedium)
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(bottom = contentPadding.calculateBottomPadding()),
+                    verticalArrangement = Arrangement.Top,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(
+                            topStart = 0.dp,
+                            topEnd = 0.dp,
+                            bottomStart = 32.dp,
+                            bottomEnd = 32.dp
+                        ),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth()
+                                .padding(top = contentPadding.calculateTopPadding() + 8.dp)
+                                .padding(bottom = 24.dp, start = 20.dp, end = 20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Today's Sprint",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 2.sp
+                            )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
 
-                Button(onClick = {
-                    scope.launch {
-                        if (health.isPermitted()) {
-                            stepCount = health.getSteps()
-                            NetworkData.sendSteps(stepCount)
-                            refreshLeaderboard()
-                        } else {
-                            launcher.launch(health.permissions)
+                            Text(
+                                text = "${stepCount.daySteps}",
+                                style = MaterialTheme.typography.displayLarge,
+                                fontWeight = FontWeight.Black
+                            )
+
+                            Text(
+                                text = "steps",
+                                style = MaterialTheme.typography.labelMedium
+                            )
                         }
                     }
-                }) {
-                    Text("Update Steps")
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Column(
+                        modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 20.dp)
+                    ) {
+                        LeaderboardTimeFilter(
+                            selectedElement = selectedElement,
+                            onWindowSelected = { selectedElement = it },
+                            modifier = Modifier.padding(vertical = 12.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Leaderboard",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "${allUsers.size} Racers",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        LeaderboardSection(
+                            users = allUsers,
+                            selectedElement = selectedElement,
+                            currentUid = currentUid
+                        )
+                    }
                 }
-
-                LeaderboardTimeFilter(
-                    selectedElement = selectedElement,
-                    onWindowSelected = { selectedElement = it },
-                    modifier = Modifier.padding(vertical = 12.dp)
-                )
-
-                LeaderboardSection(
-                    users = allUsers,
-                    selectedElement = selectedElement,
-                    currentUid = currentUid
-                )
             }
 
             // Add a view Fragment
@@ -421,7 +484,7 @@ fun LeaderboardSection(
             }
 
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().animateItem(fadeInSpec = null, fadeOutSpec = null, placementSpec = spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessLow)),
                 colors = CardDefaults.cardColors(
                     containerColor = if(isCurrentUser){
                         MaterialTheme.colorScheme.primaryContainer
