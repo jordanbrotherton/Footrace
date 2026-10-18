@@ -400,7 +400,7 @@ fun Header(modifier: Modifier = Modifier, contentPadding: PaddingValues = Paddin
 
                             Spacer(modifier = Modifier.height(8.dp))
                                 LazyColumn(
-                                    modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp),
+                                    modifier = Modifier.fillMaxWidth(),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     items(pendingFriends, key = { it.uid }) { friend ->
@@ -438,7 +438,7 @@ fun Header(modifier: Modifier = Modifier, contentPadding: PaddingValues = Paddin
                             )
                         }else {
                             LazyColumn(
-                                modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp),
+                                modifier = Modifier.fillMaxWidth(),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 items(friends, key = { it.uid }) { friend ->
