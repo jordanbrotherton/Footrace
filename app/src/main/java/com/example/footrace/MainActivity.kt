@@ -248,7 +248,7 @@ fun Header(modifier: Modifier = Modifier, contentPadding: PaddingValues = Paddin
                         ) {
                             Text(
                                 text = "Today's Sprint",
-                                style = MaterialTheme.typography.labelLarge,
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 2.sp
                             )
@@ -256,14 +256,14 @@ fun Header(modifier: Modifier = Modifier, contentPadding: PaddingValues = Paddin
                             Spacer(modifier = Modifier.height(4.dp))
 
                             Text(
-                                text = "${stepCount.daySteps}",
-                                style = MaterialTheme.typography.displayLarge,
+                                text = "%,d".format(stepCount.daySteps),
+                                fontSize = 72.sp,
                                 fontWeight = FontWeight.Black
                             )
 
                             Text(
                                 text = "steps",
-                                style = MaterialTheme.typography.labelMedium
+                                fontSize = 14.sp,
                             )
                         }
                     }
@@ -288,15 +288,17 @@ fun Header(modifier: Modifier = Modifier, contentPadding: PaddingValues = Paddin
                         ) {
                             Text(
                                 text = "Leaderboard",
-                                style = MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
                                 text = "${allUsers.size} Racers",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Medium
                             )
                         }
+
+                        Spacer(modifier = Modifier.height(8.dp))
 
                         LeaderboardSection(
                             users = allUsers,
